@@ -16,7 +16,9 @@ log = logging.getLogger("visionx")
 SECRET = os.getenv("JWT_SECRET", "change-me")
 DB = os.getenv("DATABASE_URL", "sqlite:///./visionx.db")
 if DB.startswith("postgres://"):
-    DB = DB.replace("postgres://", "postgresql://", 1)
+    DB = DB.replace("postgres://", "postgresql+psycopg2://", 1)
+elif DB.startswith("postgresql://") and not DB.startswith("postgresql+"):
+    DB = DB.replace("postgresql://", "postgresql+psycopg2://", 1)
 UPLOADS = os.getenv("UPLOAD_DIR", "./uploads"); os.makedirs(UPLOADS, exist_ok=True)
 MAX_MB = int(os.getenv("MAX_UPLOAD_MB", 10))
 raw_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:5173,*")
