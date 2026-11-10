@@ -5,7 +5,9 @@ services:
     volumes: [pgdata:/var/lib/postgresql/data]
     healthcheck: { test: ["CMD-SHELL","pg_isready -U visionx"], interval: 5s, retries: 10 }
   backend:
-    build: ./backend
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
     environment:
       DATABASE_URL: postgresql://visionx:${DB_PASSWORD}@db:5432/visionx
       JWT_SECRET: ${JWT_SECRET}
