@@ -15,9 +15,12 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name
 log = logging.getLogger("visionx")
 SECRET = os.getenv("JWT_SECRET", "change-me")
 DB = os.getenv("DATABASE_URL", "sqlite:///./visionx.db")
+if DB.startswith("postgres://"):
+    DB = DB.replace("postgres://", "postgresql://", 1)
 UPLOADS = os.getenv("UPLOAD_DIR", "./uploads"); os.makedirs(UPLOADS, exist_ok=True)
 MAX_MB = int(os.getenv("MAX_UPLOAD_MB", 10))
-ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:5173").split(",")
+raw_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:5173,*")
+ORIGINS = ["*"] if "*" in raw_origins else [o.strip() for o in raw_origins.split(",") if o.strip()]
 
 engine = create_engine(DB, pool_pre_ping=True)
 Session_ = sessionmaker(bind=engine); Base = declarative_base()
