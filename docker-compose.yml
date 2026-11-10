@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:16
+    environment: { POSTGRES_USER: visionx, POSTGRES_PASSWORD: ${DB_PASSWORD}, POSTGRES_DB: visionx }
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck: { test: ["CMD-SHELL","pg_isready -U visionx"], interval: 5s, retries: 10 }
+  backend:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql://visionx:${DB_PASSWORD}@db:5432/visionx
+      JWT_SECRET: ${JWT_SECRET}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+      UPLOAD_DIR: /data/uploads
+    volumes: [uploads:/data/uploads, models:/root/.cache]
+    depends_on: { db: { condition: service_healthy } }
+    ports: ["8000:8000"]
+  frontend:
+    build: ./frontend
+    ports: ["3000:80"]
+    depends_on: [backend]
+volumes: { pgdata: {}, uploads: {}, models: {} }
