@@ -164,3 +164,22 @@ def stats(u: User = Depends(current), s: Session = Depends(db)):
     by = dict(s.query(Analysis.kind, func.count()).filter_by(user_id=u.id).group_by(Analysis.kind).all())
     return {"images": s.query(Img).filter_by(user_id=u.id).count(), "by_kind": by,
             "avg_latency": {k: round(v, 1) for k, v in s.query(Analysis.kind, func.avg(Analysis.latency_ms)).filter_by(user_id=u.id).group_by(Analysis.kind).all()}}
+
+# Serve built frontend in unified deployment mode (e.g. Hugging Face Spaces)
+static_dir = os.path.join(os.path.dirname(__file__), "..", "static")
+if not os.path.exists(static_dir):
+    static_dir = os.path.join(os.path.dirname(__file__), "..", "..", "frontend", "dist")
+
+if os.path.exists(static_dir):
+    from fastapi.staticfiles import StaticFiles
+    assets_dir = os.path.join(static_dir, "assets")
+    if os.path.exists(assets_dir):
+        app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+
+    @app.get("/{full_path:path}")
+    async def serve_frontend(full_path: str):
+        file_path = os.path.join(static_dir, full_path)
+        if full_path and os.path.isfile(file_path):
+            return FileResponse(file_path)
+        return FileResponse(os.path.join(static_dir, "index.html"))
+
