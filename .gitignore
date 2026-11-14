@@ -44,6 +44,7 @@ uploads/
 *.pt
 *.pth
 *.onnx
+!backend/yolov8n.pt
 
 # Environment variables & secrets
 .env

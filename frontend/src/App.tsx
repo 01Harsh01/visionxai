@@ -251,8 +251,14 @@ function Analyze() {
       </div>
       <div className="card">
         <h2 className="font-semibold mb-2">Results</h2>
-        {err && <p className="text-red-400 text-sm">{err}</p>}
-        {!out && !err && <p className="text-slate-400 text-sm">Select an image and run an analysis.</p>}
+        {busy && (
+          <div className="p-3 bg-slate-800/80 rounded-xl mb-3 flex items-center gap-2 text-sm text-indigo-300">
+            <span className="inline-block animate-spin mr-1">⚙️</span>
+            <span>Running {busy === "detect" ? "YOLOv8 Detection" : busy === "caption" ? "BLIP Caption" : "EasyOCR Text Extractor"}… please wait…</span>
+          </div>
+        )}
+        {err && <p className="text-red-400 text-sm leading-relaxed mb-2">{err}</p>}
+        {!out && !err && !busy && <p className="text-slate-400 text-sm">Select an image and run an analysis.</p>}
         {out && (
           <>
             <p className="text-xs text-slate-400 mb-2">{out.latency_ms} ms</p>
