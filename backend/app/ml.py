@@ -1,11 +1,23 @@
-"""Lazy-loaded, cached model services. GPU if available, else CPU."""
-import io, numpy as np, torch
+"""Lazy-loaded, cached model services with memory management for free tier hosting. GPU if available, else CPU."""
+import io, gc, numpy as np, torch
 from PIL import Image
 
 dev = "cuda" if torch.cuda.is_available() else "cpu"
 _c: dict = {}
+
+def _free_others(keep_key: str):
+    """Evict other models from memory to avoid hitting the 512MB RAM limit on Render."""
+    for k in list(_c.keys()):
+        if k != keep_key:
+            del _c[k]
+    gc.collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+
 def _get(k, f):
-    if k not in _c: _c[k] = f()
+    if k not in _c:
+        _free_others(k)
+        _c[k] = f()
     return _c[k]
 
 def load(b: bytes) -> Image.Image:
@@ -41,7 +53,9 @@ def ocr(im):
 def _clip():
     from transformers import CLIPModel, CLIPProcessor
     n = "openai/clip-vit-base-patch32"
-    return CLIPProcessor.from_pretrained(n), CLIPModel.from_pretrained(n).to(dev).eval()
+    p = CLIPProcessor.from_pretrained(n)
+    m = CLIPModel.from_pretrained(n, low_cpu_mem_usage=True).to(dev).eval()
+    return p, m
 
 def _norm(t):
     if hasattr(t, "pooler_output"):

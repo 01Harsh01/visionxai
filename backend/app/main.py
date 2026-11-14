@@ -110,7 +110,12 @@ def upload(file: UploadFile = File(...), u: User = Depends(current), s: Session 
     try: im = ml.load(b)
     except Exception: raise HTTPException(422, "Corrupt or unreadable image")
     path = os.path.join(UPLOADS, f"{uuid.uuid4().hex}.png"); im.save(path)
-    i = Img(user_id=u.id, name=file.filename, path=path, w=im.width, h=im.height, embedding=ml.embed_image(im))
+    emb = None
+    try:
+        emb = ml.embed_image(im)
+    except Exception as e:
+        print(f"[Upload] Embedding skipped: {e}")
+    i = Img(user_id=u.id, name=file.filename, path=path, w=im.width, h=im.height, embedding=emb)
     s.add(i); s.commit(); return img_out(i)
 
 @app.get("/api/images")
@@ -160,7 +165,7 @@ class SearchReq(BaseModel):
 
 @app.post("/api/search/semantic")
 def search(r: SearchReq, u: User = Depends(current), s: Session = Depends(db)):
-    rows = s.query(Img).filter_by(user_id=u.id).all()
+    rows = [i for i in s.query(Img).filter_by(user_id=u.id).all() if i.embedding is not None]
     if not rows: return []
     q = np.array(ml.embed_text(r.query)); M = np.array([i.embedding for i in rows])
     sc = M @ q
