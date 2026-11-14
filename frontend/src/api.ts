@@ -31,7 +31,7 @@ const rawEnv = (
 
 export const API_BASE = rawEnv ? (rawEnv.endsWith("/api") ? rawEnv : `${rawEnv}/api`) : "/api";
 
-export const api = axios.create({ baseURL: API_BASE });
+export const api = axios.create({ baseURL: API_BASE, timeout: 60000 });
 
 api.interceptors.request.use((c) => {
   const t = getToken();
@@ -51,7 +51,14 @@ api.interceptors.response.use(
 
 export const imgUrl = (id: number) => `${API_BASE}/images/${id}/file?token=${getToken() || ""}`;
 
-export const errMsg = (e: any) =>
-  e?.response?.data?.detail?.toString?.() ?? e?.message ?? "Something went wrong";
+export const errMsg = (e: any) => {
+  if (e?.code === "ECONNABORTED" || e?.message?.includes("timeout")) {
+    return "Request timed out while waiting for model inference. Please try again.";
+  }
+  if (e?.message === "Network Error") {
+    return "Network error: The Render backend is currently starting or waking up. Please try again in a few seconds.";
+  }
+  return e?.response?.data?.detail?.toString?.() ?? e?.message ?? "Something went wrong";
+};
 
 export type Img = { id: number; name: string; w: number; h: number; score?: number };
