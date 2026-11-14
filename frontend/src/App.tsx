@@ -1,13 +1,62 @@
 import { useEffect, useRef, useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { LayoutDashboard, ScanSearch, MessageSquare, Search, History, Menu, LogOut, Upload, Trash2, X } from "lucide-react";
-import { api, errMsg, getToken, imgUrl, setToken, Img } from "./api";
+import { api, errMsg, getToken, imgUrl, setToken, getCustomApiUrl, setCustomApiUrl, Img } from "./api";
 
 function Auth({ done }: { done: () => void }) {
   const [reg, setReg] = useState(false), [email, setE] = useState(""), [pw, setP] = useState(""), [err, setErr] = useState(""), [busy, setB] = useState(false);
-  const go = async () => { setB(true); setErr(""); try { const r = await api.post(`/auth/${reg ? "register" : "login"}`, { email, password: pw }); setToken(r.data.access_token); done(); } catch (e) { setErr(errMsg(e)); } setB(false); };
+  const [customUrl, setCustomUrl] = useState(getCustomApiUrl());
+  const [showConfig, setShowConfig] = useState(!((import.meta as any).env?.VITE_API_URL) && !getCustomApiUrl());
+  const [savedMsg, setSavedMsg] = useState("");
+
+  const saveUrl = () => {
+    setCustomApiUrl(customUrl);
+    setSavedMsg("Saved! Ready to connect.");
+    setTimeout(() => setSavedMsg(""), 3000);
+  };
+
+  const go = async () => {
+    setB(true);
+    setErr("");
+    try {
+      const r = await api.post(`/auth/${reg ? "register" : "login"}`, { email, password: pw });
+      setToken(r.data.access_token);
+      done();
+    } catch (e) {
+      setErr(errMsg(e));
+      if (!((import.meta as any).env?.VITE_API_URL) && !getCustomApiUrl()) {
+        setShowConfig(true);
+      }
+    }
+    setB(false);
+  };
+
   return (<div className="min-h-screen grid place-items-center p-4"><div className="card w-full max-w-sm space-y-3">
-    <h1 className="text-2xl font-bold">Vision<span className="text-brand">X</span> AI</h1>
+    <div className="flex justify-between items-center">
+      <h1 className="text-2xl font-bold">Vision<span className="text-brand">X</span> AI</h1>
+      <button type="button" onClick={() => setShowConfig(!showConfig)} className="text-xs text-slate-400 hover:text-white" title="Configure Backend Server">
+        ⚙️ Server
+      </button>
+    </div>
+
+    {showConfig && (
+      <div className="p-3 bg-slate-800/90 rounded-xl text-xs space-y-2 border border-brand/40">
+        <p className="text-slate-300 font-medium">Render Backend URL:</p>
+        <input
+          className="inp !py-1.5 text-xs w-full"
+          placeholder="https://your-backend.onrender.com"
+          value={customUrl}
+          onChange={(e) => setCustomUrl(e.target.value)}
+        />
+        <div className="flex justify-between items-center pt-1">
+          <span className="text-emerald-400 text-[11px]">{savedMsg}</span>
+          <button type="button" className="btn btn-p !py-1 !px-3 text-xs" onClick={saveUrl}>
+            Save URL
+          </button>
+        </div>
+      </div>
+    )}
+
     <input className="inp" placeholder="Email" value={email} onChange={(e) => setE(e.target.value)} />
     <input className="inp" type="password" placeholder="Password (8+ chars)" value={pw} onChange={(e) => setP(e.target.value)} onKeyDown={(e) => e.key === "Enter" && go()} />
     {err && <p className="text-red-400 text-sm">{err}</p>}
