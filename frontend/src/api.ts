@@ -14,7 +14,20 @@ export const setToken = (t: string | null) => {
   }
 };
 
-const rawEnv = (import.meta.env.VITE_API_URL || "").toString().replace(/^["']|["']$/g, "").trim().replace(/\/$/, "");
+// Check for VITE_API_URL and common alias names
+const rawEnv = (
+  import.meta.env.VITE_API_URL ||
+  import.meta.env.VITE_BACKEND_URL ||
+  import.meta.env.VITE_SERVER_URL ||
+  import.meta.env.VITE_RENDER_URL ||
+  import.meta.env.VITE_PUBLIC_API_URL ||
+  ""
+)
+  .toString()
+  .replace(/^["']|["']$/g, "")
+  .trim()
+  .replace(/\/$/, "");
+
 export const API_BASE = rawEnv ? (rawEnv.endsWith("/api") ? rawEnv : `${rawEnv}/api`) : "/api";
 
 export const api = axios.create({ baseURL: API_BASE });
@@ -39,7 +52,7 @@ export const imgUrl = (id: number) => `${API_BASE}/images/${id}/file?token=${get
 
 export const errMsg = (e: any) => {
   if (e?.response?.status === 405) {
-    return "Request failed (405): Backend API URL not reachable. Ensure VITE_API_URL is set in Vercel and the deployment is rebuilt.";
+    return "Error 405: The frontend cannot reach your backend on Render. Please verify your Vercel environment variable settings (see instructions in chat) or paste your Render backend URL.";
   }
   return e?.response?.data?.detail?.toString?.() ?? e?.message ?? "Something went wrong";
 };
