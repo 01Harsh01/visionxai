@@ -66,6 +66,15 @@ def current(authorization: str = Header(None), token: str = Query(None), s: Sess
 class Cred(BaseModel):
     email: EmailStr; password: str
 
+@app.get("/")
+def root():
+    return {
+        "status": "online",
+        "message": "VisionX AI Backend is running successfully!",
+        "docs": "/docs",
+        "health": "/health"
+    }
+
 @app.get("/health")
 def health(): return {"status": "ok", "device": ml.dev}
 
