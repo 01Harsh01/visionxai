@@ -7,6 +7,7 @@ services:
   backend:
     build: ./backend
     environment:
+      PORT: 8000
       DATABASE_URL: postgresql://visionx:${DB_PASSWORD}@db:5432/visionx
       JWT_SECRET: ${JWT_SECRET}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}

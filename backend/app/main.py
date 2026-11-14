@@ -41,10 +41,16 @@ class Analysis(Base):
     image_id = Column(ForeignKey("uploaded_images.id", ondelete="CASCADE"), index=True)
     kind = Column(String, index=True); query = Column(String); result = Column(JSON)
     latency_ms = Column(Float); created = Column(DateTime, default=dt.datetime.utcnow)
-Base.metadata.create_all(engine)
-
 app = FastAPI(title="VisionX AI")
 app.add_middleware(CORSMiddleware, allow_origins=ORIGINS, allow_methods=["*"], allow_headers=["*"])
+
+@app.on_event("startup")
+def on_startup():
+    try:
+        Base.metadata.create_all(engine)
+        log.info("Database tables verified.")
+    except Exception as e:
+        log.error(f"Error initializing database tables: {e}")
 
 def db():
     s = Session_()
