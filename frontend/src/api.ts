@@ -14,14 +14,15 @@ export const setToken = (t: string | null) => {
   }
 };
 
-// Check for VITE_API_URL and common alias names
+const defaultBackendUrl = "https://visionxai-1.onrender.com";
+
 const rawEnv = (
   import.meta.env.VITE_API_URL ||
   import.meta.env.VITE_BACKEND_URL ||
   import.meta.env.VITE_SERVER_URL ||
   import.meta.env.VITE_RENDER_URL ||
   import.meta.env.VITE_PUBLIC_API_URL ||
-  ""
+  defaultBackendUrl
 )
   .toString()
   .replace(/^["']|["']$/g, "")
@@ -50,11 +51,7 @@ api.interceptors.response.use(
 
 export const imgUrl = (id: number) => `${API_BASE}/images/${id}/file?token=${getToken() || ""}`;
 
-export const errMsg = (e: any) => {
-  if (e?.response?.status === 405) {
-    return "Error 405: The frontend cannot reach your backend on Render. Please verify your Vercel environment variable settings (see instructions in chat) or paste your Render backend URL.";
-  }
-  return e?.response?.data?.detail?.toString?.() ?? e?.message ?? "Something went wrong";
-};
+export const errMsg = (e: any) =>
+  e?.response?.data?.detail?.toString?.() ?? e?.message ?? "Something went wrong";
 
 export type Img = { id: number; name: string; w: number; h: number; score?: number };
